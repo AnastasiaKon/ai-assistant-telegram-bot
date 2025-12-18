@@ -28,42 +28,28 @@ async def set_webhook():
 
 @app.post("/telegram/webhook")
 async def telegram_webhook(request: Request):
-    # Проверяем secret_token от Telegram (защита от чужих запросов)
-    header_secret = request.headers.get("X-Telegram-Bot-Api-Secret-Token")
-    if header_secret != SECRET_TOKEN:
-        return {"ok": False}
-
     update = await request.json()
 
-    message = update.get("message") or update.get("edited_message")
+    message = update.get("message")
     if not message:
         return {"ok": True}
 
-    chat = message.get("chat") or {}
-    chat_id = chat.get("id")
-    text = message.get("text") or ""
-    if not chat_id:
-        return {"ok": True}
+    chat_id = message["chat"]["id"]
+    text = message.get("text", "")
 
-    # 1) Сходить в твой backend /ask
-    async with httpx.AsyncClient() as client:
-        resp = await client.post(BACKEND_URL, json={"text": text}, timeout=60)
-
-    try:
-        data = resp.json()
-        answer = data.get("answer") or data.get("error") or "Ошибка 😢"
-    except Exception:
-        answer = "Ошибка сервера 😢"
-
-    # 2) Ответить в Telegram
+    # ПРОСТОЙ ТЕСТОВЫЙ ОТВЕТ
     async with httpx.AsyncClient() as client:
         await client.post(
             f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage",
-            json={"chat_id": chat_id, "text": answer},
-            timeout=30,
+            json={
+                "chat_id": chat_id,
+                "text": f"Эхо: {text}"
+            },
+            timeout=30
         )
 
     return {"ok": True}
+
 
 
 @app.get("/health")
