@@ -38,7 +38,7 @@ def run_bot():
 
 
 # ----------------------
-# Dummy HTTP server (for Render)
+# HTTP server (for Render)
 # ----------------------
 
 class HealthHandler(BaseHTTPRequestHandler):
@@ -59,5 +59,8 @@ def run_http_server():
 # ----------------------
 
 if __name__ == "__main__":
-    threading.Thread(target=run_http_server, daemon=True).start()
-    run_bot()
+    # 1️⃣ Запускаем бота В ФОНЕ
+    threading.Thread(target=run_bot, daemon=True).start()
+
+    # 2️⃣ HTTP сервер — в главном потоке (Render это увидит)
+    run_http_server()
